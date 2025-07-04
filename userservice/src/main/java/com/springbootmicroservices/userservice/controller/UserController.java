@@ -8,11 +8,13 @@ import com.springbootmicroservices.userservice.model.user.dto.request.TokenInval
 import com.springbootmicroservices.userservice.model.user.dto.request.TokenRefreshRequest;
 import com.springbootmicroservices.userservice.model.user.dto.response.TokenResponse;
 import com.springbootmicroservices.userservice.model.user.mapper.TokenToTokenResponseMapper;
+import com.springbootmicroservices.userservice.model.user.response.UserResponse;
 import com.springbootmicroservices.userservice.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -36,6 +38,8 @@ public class UserController {
     private final RefreshTokenService refreshTokenService;
 
     private final LogoutService logoutService;
+
+    private final UserReadService userReadService;
 
     private final TokenToTokenResponseMapper tokenToTokenResponseMapper = TokenToTokenResponseMapper.initialize();
 
@@ -116,6 +120,14 @@ public class UserController {
     public ResponseEntity<UsernamePasswordAuthenticationToken> getAuthentication(@RequestParam String token) {
         UsernamePasswordAuthenticationToken authentication = tokenService.getAuthentication(token);
         return ResponseEntity.ok(authentication);
+    }
+
+    @GetMapping("/{emailId}")
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'USER')")
+    public CustomResponse<UserResponse> getUserByEmail(@PathVariable final String emailId) {
+        log.info("UserController | getUserByEmail");
+        final UserResponse user = userReadService.getUserById(emailId);
+        return CustomResponse.successOf(user);
     }
 
 }
